@@ -18,9 +18,18 @@ interface ITaskList {
 }
 
 const App = () => {
+    const [origin, setOrigin] = useState<ITaskList>({
+        Origin: [
+            "Learn React",
+            "Learn dnd-kit",
+            "Learn Typescript",
+            "Learn CSS",
+            "Learn rtk query",
+        ],
+    });
     const [taskList, setTaskList] = useState<ITaskList>({
-        Planned: ["Learn React", "Learn dnd-kit", "Learn Typescript"],
-        Processed: ["Learn CSS", "Learn rtk query"],
+        Planned: ["Planned 1"],
+        Processed: [],
         Done: [],
         Test: [],
     });
@@ -70,6 +79,7 @@ const App = () => {
     const dragOverHandler = (e: DragOverEvent) => {
         // Check if item is drag into unknown area
         const { active, over } = e;
+        console.log("🚀 ~ dragOverHandler ~  active, over:", active, over);
         if (!over) {
             // console.log("🚀 ~ dragOverHandler ~ over:", over);
             return;
@@ -83,6 +93,8 @@ const App = () => {
             initialContainer
         );
         console.log("🚀 ~ dragOverHandler ~ targetContainer:", targetContainer);
+
+        if (initialContainer === "Origin") return;
 
         // if there are none initial sortable list name, then item is not sortable item
         if (!initialContainer) return;
@@ -148,9 +160,14 @@ const App = () => {
         >
             <main className="flex flex-col items-center gap-8 py-8 px-16">
                 <h1>Multi Sortable List</h1>
-                {/* <div>
-                    <TaskList activeId={activeId}></TaskList>
-                </div> */}
+                <div>
+                    <TaskList
+                        activeId={activeId}
+                        key={"Origin"}
+                        title={"Origin"}
+                        tasks={origin["Origin"]}
+                    ></TaskList>
+                </div>
                 <div className={styles.container}>
                     {/* <div className="grid grid-cols-[repeat(2,1fr)] justify-evenly w-[75%] p-4 border border-black"> */}
                     {Object.keys(taskList).map((key) => (
