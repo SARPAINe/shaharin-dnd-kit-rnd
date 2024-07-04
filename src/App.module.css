@@ -1,18 +1,17 @@
 .main {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  padding: 2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+    padding: 2rem 4rem;
 }
 
 .container {
-  display: flex;
-  border: 2px solid black;
-  width: 75%;
-  min-height: 75vh;
-  padding: 1rem;
-  justify-content: space-evenly;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    border: 2px solid black;
+    width: 75%;
+    /* min-height: 500px; */
+    padding: 1rem;
+    justify-content: space-evenly;
 }
-
-
