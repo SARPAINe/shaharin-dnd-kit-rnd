@@ -1,8 +1,5 @@
-import { DragOverlay, UniqueIdentifier, useDroppable } from "@dnd-kit/core";
-import {
-    SortableContext,
-    verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+import { UniqueIdentifier, useDroppable } from "@dnd-kit/core";
+import { SortableContext } from "@dnd-kit/sortable";
 import { FC } from "react";
 import TaskItem from "../task-item/TaskItem";
 import styles from "./TaskList.module.css";

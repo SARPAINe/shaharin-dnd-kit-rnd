@@ -17,8 +17,23 @@ interface ITaskList {
     [key: string]: string[];
 }
 
+function orderItems(
+    containerName: string,
+    active: any,
+    over: any,
+    currentItem: any
+) {
+    const temp = { ...currentItem };
+    if (!over) return temp;
+    const oldIdx = temp[containerName].indexOf(active.id.toString());
+    const newIdx = temp[containerName].indexOf(over.id.toString());
+    temp[containerName] = arrayMove(temp[containerName], oldIdx, newIdx);
+    console.log(temp);
+    return temp;
+}
+
 const App = () => {
-    const [origin, setOrigin] = useState<ITaskList>({
+    const initialTaskList: ITaskList = {
         Origin: [
             "Learn React",
             "Learn dnd-kit",
@@ -26,9 +41,10 @@ const App = () => {
             "Learn CSS",
             "Learn rtk query",
         ],
-    });
+    };
+    const [origin, setOrigin] = useState(initialTaskList);
     const [taskList, setTaskList] = useState<ITaskList>({
-        Planned: ["Planned 1"],
+        Planned: [],
         Processed: [],
         Done: [],
         Test: [],
@@ -43,115 +59,131 @@ const App = () => {
     };
 
     const dragEndHandler = (e: DragEndEvent) => {
-        // Check if item is drag into unknown area
         setActiveId(null);
         const { active, over } = e;
         if (!over || !active.data.current || !over.data.current) {
             return;
         }
 
-        // Check if item position is the same
+        console.log(active, over);
+
         if (active.id === over?.id) return;
 
-        // Check if item is moved outside of the column
         if (
             active.data.current.sortable.containerId !==
             over.data.current.sortable.containerId
         )
             return;
+        const containerName = over.data.current.sortable.containerId;
 
-        // Sort the items list order based on item target position
-        const containerName = active.data.current.sortable.containerId;
-        setTaskList((taskList) => {
-            const temp = { ...taskList };
-            if (!e.over) return temp;
-            const oldIdx = temp[containerName].indexOf(active.id.toString());
-            const newIdx = temp[containerName].indexOf(over.id.toString());
-            temp[containerName] = arrayMove(
-                temp[containerName],
-                oldIdx,
-                newIdx
-            );
-            return temp;
-        });
+        setTaskList((taskList) =>
+            orderItems(containerName, active, over, taskList)
+        );
     };
 
     const dragOverHandler = (e: DragOverEvent) => {
-        // Check if item is drag into unknown area
         const { active, over } = e;
-        console.log("🚀 ~ dragOverHandler ~  active, over:", active, over);
         if (!over) {
-            // console.log("🚀 ~ dragOverHandler ~ over:", over);
             return;
         }
 
-        // Get the initial and target sortable list name
         const initialContainer = active.data.current?.sortable?.containerId;
-        const targetContainer = over?.data.current?.sortable?.containerId;
-        console.log(
-            "🚀 ~ dragOverHandler ~ initialContainer:",
-            initialContainer
-        );
-        console.log("🚀 ~ dragOverHandler ~ targetContainer:", targetContainer);
+        const targetContainer =
+            over?.data.current?.sortable?.containerId || over.id;
+        console.log(initialContainer, targetContainer);
 
-        if (initialContainer === "Origin") return;
-
-        // if there are none initial sortable list name, then item is not sortable item
         if (!initialContainer) return;
 
-        // Order the item list based on target item position
-        setTaskList((taskList) => {
-            const temp = { ...taskList };
-            if (!targetContainer) {
-                // If item is already there then don't re-add it
-                if (taskList[over.id].includes(active.id.toString()))
-                    return temp;
-
-                // Remove item from it's initial container
+        if (initialContainer == "Origin") {
+            setOrigin((origin) => {
+                const temp = { ...origin };
+                if (initialContainer === targetContainer) {
+                    return orderItems(initialContainer, active, over, temp);
+                } else {
+                    temp["Origin"] = temp["Origin"].filter(
+                        (item) => item != active.id
+                    );
+                    setTaskList((tasks) => {
+                        const tempTasks = { ...tasks };
+                        const targetIndex = tempTasks[targetContainer].indexOf(
+                            over.id.toString()
+                        );
+                        tempTasks[targetContainer].splice(
+                            targetIndex,
+                            0,
+                            active.id.toString()
+                        );
+                        return tempTasks;
+                    });
+                }
+                return temp;
+            });
+        } else if (
+            targetContainer == "Origin" &&
+            initialContainer !== targetContainer
+        ) {
+            //children to origin
+            console.log("🚀 ~ dragOverHandler ~ active:", active);
+            console.log("🚀 ~ dragOverHandler ~ over:", over);
+            setTaskList((taskList) => {
+                const temp = { ...taskList };
                 temp[initialContainer] = temp[initialContainer].filter(
-                    (task) => task !== active.id.toString()
+                    (item) => item != active.id
                 );
+                setOrigin((origin) => {
+                    const tempTasks = { ...origin };
+                    const targetIndex = tempTasks[targetContainer].indexOf(
+                        over.id.toString()
+                    );
+                    tempTasks[targetContainer].splice(
+                        targetIndex,
+                        0,
+                        active.id.toString()
+                    );
 
-                // Add item to it's target container which the droppable zone belongs to
-                temp[over.id].push(active.id.toString());
+                    console.log("🚀 ~ setOrigin ~ tempTasks:", tempTasks);
+                    return tempTasks;
+                });
+                return temp;
+            });
+        } else {
+            setTaskList((taskList) => {
+                const temp = { ...taskList };
+                if (!targetContainer) {
+                    if (taskList[over.id].includes(active.id.toString()))
+                        return temp;
+
+                    temp[initialContainer] = temp[initialContainer].filter(
+                        (task) => task !== active.id.toString()
+                    );
+                    temp[over.id].push(active.id.toString());
+
+                    return temp;
+                }
+
+                if (initialContainer === targetContainer) {
+                    return orderItems(initialContainer, active, over, temp);
+                } else {
+                    temp[initialContainer] = temp[initialContainer].filter(
+                        (task) => task !== active.id.toString()
+                    );
+
+                    const newIdx = temp[targetContainer].indexOf(
+                        over.id.toString()
+                    );
+                    temp[targetContainer].splice(
+                        newIdx,
+                        0,
+                        active.id.toString()
+                    );
+                }
 
                 return temp;
-            }
-
-            // If the item is drag around in the same container then just reorder the list
-            if (initialContainer === targetContainer) {
-                const oldIdx = temp[initialContainer].indexOf(
-                    active.id.toString()
-                );
-                const newIdx = temp[initialContainer].indexOf(
-                    over.id.toString()
-                );
-                temp[initialContainer] = arrayMove(
-                    temp[initialContainer],
-                    oldIdx,
-                    newIdx
-                );
-            } else {
-                // If the item is drag into another different container
-
-                // Remove item from it's initial container
-                temp[initialContainer] = temp[initialContainer].filter(
-                    (task) => task !== active.id.toString()
-                );
-
-                // Add item to it's target container
-                const newIdx = temp[targetContainer].indexOf(
-                    over.id.toString()
-                );
-                temp[targetContainer].splice(newIdx, 0, active.id.toString());
-            }
-
-            return temp;
-        });
+            });
+        }
     };
 
     return (
-        // Attach the dragEnd and dragOver event listeners
         <DndContext
             onDragEnd={dragEndHandler}
             onDragOver={dragOverHandler}
@@ -160,16 +192,15 @@ const App = () => {
         >
             <main className="flex flex-col items-center gap-8 py-8 px-16">
                 <h1>Multi Sortable List</h1>
-                <div>
+                <div className={styles.origin}>
                     <TaskList
                         activeId={activeId}
                         key={"Origin"}
                         title={"Origin"}
                         tasks={origin["Origin"]}
-                    ></TaskList>
+                    />
                 </div>
                 <div className={styles.container}>
-                    {/* <div className="grid grid-cols-[repeat(2,1fr)] justify-evenly w-[75%] p-4 border border-black"> */}
                     {Object.keys(taskList).map((key) => (
                         <TaskList
                             activeId={activeId}
